@@ -1,48 +1,73 @@
-function move(direction) {
-    const rover_id = document.getElementById("rover").value;
-    fetch('/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rover_id, direction })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.warning) {
-            document.getElementById("message").innerText = data.warning;
+/* script.js */
+const API_BASE = "https://fleetbots-production.up.railway.app";
+let sessionId = "";
+let rovers = ["Rover-1", "Rover-2", "Rover-3", "Rover-4", "Rover-5"];
+let positions = {};
+let obstacles = [[2, 2], [3, 4], [1, 3]];
+
+const canvas = document.getElementById("simulationCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 500;
+canvas.height = 500;
+
+function drawGrid() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let x = 0; x <= canvas.width; x += 50) {
+        for (let y = 0; y <= canvas.height; y += 50) {
+            ctx.strokeStyle = "#ddd";
+            ctx.strokeRect(x, y, 50, 50);
         }
-        updateGrid();
+    }
+    drawObstacles();
+    drawRovers();
+}
+
+function drawObstacles() {
+    ctx.fillStyle = "red";
+    obstacles.forEach(([x, y]) => {
+        ctx.fillRect(x * 50, y * 50, 50, 50);
     });
 }
 
-function updateGrid() {
-    fetch('/status')
-        .then(response => response.json())
-        .then(data => {
-            const grid = document.getElementById("grid");
-            grid.innerHTML = "";
-            let positions = data.positions;
-            let obstacles = data.obstacles;
-
-            for (let y = 5; y >= 0; y--) {
-                for (let x = 0; x <= 5; x++) {
-                    let cell = document.createElement("div");
-                    cell.classList.add("cell");
-
-                    let roverHere = Object.keys(positions).find(r => positions[r][0] === x && positions[r][1] === y);
-                    if (roverHere) {
-                        cell.classList.add("rover");
-                        cell.innerText = roverHere;
-                    }
-
-                    if (obstacles.some(o => o[0] === x && o[1] === y)) {
-                        cell.classList.add("obstacle");
-                    }
-
-                    grid.appendChild(cell);
-                }
-            }
-        });
+function drawRovers() {
+    ctx.fillStyle = "blue";
+    Object.entries(positions).forEach(([rover, [x, y]]) => {
+        ctx.fillRect(x * 50, y * 50, 50, 50);
+    });
 }
 
-updateGrid();
-setInterval(updateGrid, 2000);
+async function startSession() {
+    const response = await fetch(`${API_BASE}/api/session/start`, { method: "POST" });
+    const data = await response.json();
+    sessionId = data.session_id;
+}
+
+async function fetchFleetStatus() {
+    const response = await fetch(`${API_BASE}/api/fleet/status?session_id=${sessionId}`);
+    const data = await response.json();
+    positions = data.positions;
+    drawGrid();
+}
+
+async function moveRover(direction) {
+    const rover = document.getElementById("roverSelect").value;
+    await fetch(`${API_BASE}/api/rover/${rover}/move?session_id=${sessionId}&direction=${direction}`, { method: "POST" });
+    fetchFleetStatus();
+}
+
+function populateRoverSelect() {
+    const select = document.getElementById("roverSelect");
+    rovers.forEach(rover => {
+        const option = document.createElement("option");
+        option.value = rover;
+        option.textContent = rover;
+        select.appendChild(option);
+    });
+}
+
+window.onload = async function() {
+    await startSession();
+    populateRoverSelect();
+    fetchFleetStatus();
+    setInterval(fetchFleetStatus, 2000);
+};

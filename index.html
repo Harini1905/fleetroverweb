@@ -3,27 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLAMBOT Fleet Control</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>SLAM Fleet Simulator</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>SLAMBOT Fleet Control</h1>
-    <div id="grid"></div>
-    <div>
-        <label for="rover">Select Rover:</label>
-        <select id="rover">
-            <option>Rover-1</option>
-            <option>Rover-2</option>
-            <option>Rover-3</option>
-            <option>Rover-4</option>
-            <option>Rover-5</option>
-        </select>
-        <button onclick="move('forward')">↑ Forward</button>
-        <button onclick="move('left')">← Left</button>
-        <button onclick="move('right')">→ Right</button>
-        <button onclick="move('backward')">↓ Backward</button>
+    <h1>SLAM Fleet Simulator</h1>
+    <canvas id="simulationCanvas"></canvas>
+    
+    <div class="controls">
+        <label for="roverSelect">Select Rover:</label>
+        <select id="roverSelect"></select>
+        
+        <button onclick="moveRover('forward')">Forward</button>
+        <button onclick="moveRover('backward')">Backward</button>
+        <button onclick="moveRover('left')">Left</button>
+        <button onclick="moveRover('right')">Right</button>
+        
+        <button onclick="fetchFleetStatus()">Get Fleet Status</button>
     </div>
-    <div id="message"></div>
-    <script src="/static/script.js"></script>
+    
+    <script src="script.js"></script>
 </body>
 </html>
